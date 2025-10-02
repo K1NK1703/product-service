@@ -26,7 +26,7 @@ import java.math.BigDecimal;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
 @Table(name = "pickup_points")
-public class PickupPoint {
+public class PickupPoint { // TODO: Entity дописывать к сущностям
 
     @EmbeddedId
     PointAddress address;
