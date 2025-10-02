@@ -24,8 +24,8 @@ import java.util.HashSet;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "point_contacts_info")
-public class PointContactInfoEntity {
+@Table(name = "point_contacts")
+public class PointContactEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

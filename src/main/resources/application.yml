@@ -1,5 +1,7 @@
 server:
-  port: ${SERVER_PORT}
+  port: 0
+  servlet:
+    context-path: /api
 
 spring:
   application:
@@ -12,7 +14,6 @@ spring:
     hibernate:
       ddl-auto: validate
     show-sql: false
-    #open-in-view: false
     properties:
       hibernate:
         hbm2ddl:
@@ -23,7 +24,13 @@ spring:
             non_contextual_creation: true
     generate-ddl: false
 
-  servlet:
-    multipart:
-      max-file-size: 10MB
-      max-request-size: 20MB
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,metrics"
+      base-path: "/actuator"
+  endpoint:
+    health:
+      show-details: always
+      show-components: always

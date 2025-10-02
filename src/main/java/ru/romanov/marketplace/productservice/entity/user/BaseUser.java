@@ -9,55 +9,54 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import lombok.experimental.FieldDefaults;
+
+import java.util.UUID;
 
 @Getter
 @Setter
 @SuperBuilder
 @NoArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
 @MappedSuperclass
 public abstract class BaseUser {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long id;
+    private UUID id;
 
-    @Column(unique = true, nullable = false)
-    String username;
+    @Column(name = "username", unique = true, nullable = false)
+    private String username;
 
-    @Column(unique = true, nullable = false)
-    String email;
+    @Column(name = "email", unique = true, nullable = false)
+    private String email;
 
-    @Column(unique = true, nullable = false)
-    String phone;
+    @Column(name = "phoneNumber", unique = true, nullable = false)
+    private String phoneNumber;
 
-    @Column(nullable = false)
-    String password;
+    @Column(name = "password", nullable = false)
+    private String password;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    UserRole role;
+    @Column(name = "role", nullable = false)
+    private UserRole role;
 
     @Column(name = "first_name", nullable = false)
-    String firstName;
+    private String firstName;
 
     @Column(name = "last_name", nullable = false)
-    String lastName;
+    private String lastName;
 
     protected BaseUser(String username,
                        String email,
-                       String phone,
+                       String phoneNumber,
                        String password,
                        UserRole role,
                        String firstName,
                        String lastName) {
         this.username = username;
         this.email = email;
-        this.phone = phone;
+        this.phoneNumber = phoneNumber;
         this.password = password;
         this.role = role;
         this.firstName = firstName;

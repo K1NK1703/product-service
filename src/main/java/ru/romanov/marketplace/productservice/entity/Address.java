@@ -4,34 +4,31 @@ import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import lombok.experimental.FieldDefaults;
 
 @Getter
 @Setter
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
 @MappedSuperclass
 public abstract class Address {
 
-    @Column(nullable = false)
-    String country;
+    @Column(name = "country", nullable = false)
+    private String country;
 
-    @Column(nullable = false)
-    String region;
+    @Column(name = "region", nullable = false)
+    private String region;
 
-    @Column(nullable = false)
-    String city;
+    @Column(name = "city", nullable = false)
+    private String city;
 
-    @Column(nullable = false)
-    String street;
+    @Column(name = "street", nullable = false)
+    private String street;
 
     @Column(name = "house_number", nullable = false)
-    String houseNumber;
+    private String houseNumber;
 
 }
