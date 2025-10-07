@@ -34,6 +34,25 @@ PickupPoint --ManyToOne--> PointContact
 - Actuator
 - OpenAPI-Generator 7.16.0 & Swagger UI 2.8.13
 
+## Архитектура
+
+Гексагональная архитектура
+
+<table style="width:100%; border-collapse: collapse; border: 1px solid #ddd;">
+  <tr>
+    <td style="border: 1px solid #ddd; padding: 10px; text-align: center;">API Layer (REST)</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid #ddd; padding: 10px; text-align: center;">Business Logic (Service)</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid #ddd; padding: 10px; text-align: center;">Data Access (jOOQ Repositories)</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid #ddd; padding: 10px; text-align: center;">PostgreSQL + Flyway</td>
+  </tr>
+</table>
+
 ## Запуск
 
 1. **Клонировать** - git clone https://github.com/K1NK1703/product-service.git
