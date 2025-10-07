@@ -148,6 +148,7 @@ tasks.named('jooqCodegen') {
             }
         }
     }
+
     doLast {
         if (postgres != null) {
             postgres.stop()
@@ -183,6 +184,5 @@ tasks.named('compileJava') {
 }
 
 tasks.named('test') {
-    //useJUnitPlatform()
     enabled = false
 }

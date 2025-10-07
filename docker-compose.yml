@@ -19,9 +19,6 @@ services:
     networks:
       - product-network
 
-  # TODO: ./gradlew clean build
-  # TODO: docker-compose build --no-cache
-  # TODO: docker-compose up -d
   product-service:
     build:
       context: ./
