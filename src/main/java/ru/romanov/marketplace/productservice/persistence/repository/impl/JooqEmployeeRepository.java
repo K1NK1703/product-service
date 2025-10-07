@@ -5,7 +5,7 @@ import org.jooq.impl.DSL;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
-import ru.romanov.marketplace.productservice.jooq.tables.pojos.Employees;
+import ru.romanov.marketplace.productservice.jooq.tables.pojos.EmployeesPojo;
 import ru.romanov.marketplace.productservice.jooq.tables.records.EmployeesRecord;
 import ru.romanov.marketplace.productservice.persistence.filter.EmployeeFilter;
 import ru.romanov.marketplace.productservice.persistence.PersistenceExceptionMapper;
@@ -26,43 +26,27 @@ public class JooqEmployeeRepository implements EmployeeRepository {
     private final PersistenceExceptionMapper persistenceExceptionMapper;
 
     @Override
-    public UUID create(Employees employeePojo) {
+    public void create(EmployeesPojo pojo) {
         try {
-            EmployeesRecord employeesRecord = dslContext.newRecord(EMPLOYEES_TABLE, employeePojo);
+            EmployeesRecord employeesRecord = dslContext.newRecord(EMPLOYEES_TABLE, pojo);
             employeesRecord.store();
-            return employeesRecord.getId();
         } catch (Throwable throwable) {
             throw persistenceExceptionMapper.map(throwable);
         }
     }
 
     @Override
-    public UUID update(Employees employeePojo) {
+    public void update(EmployeesPojo pojo) {
         try {
-            EmployeesRecord employeesRecord = dslContext.newRecord(EMPLOYEES_TABLE, employeePojo);
-            employeesRecord.update();
-            return employeesRecord.getId();
+            EmployeesRecord employeesRecord = dslContext.newRecord(EMPLOYEES_TABLE, pojo);
+            dslContext.executeUpdate(employeesRecord);
         } catch (Throwable throwable) {
             throw persistenceExceptionMapper.map(throwable);
         }
     }
 
     @Override
-    public Optional<Employees> findById(UUID id, Boolean forUpdate) {
-        final Condition condition = composeDefaultFindOneCondition(id);
-
-        final var selectConditionStep = dslContext.selectFrom(EMPLOYEES_TABLE)
-                .where(condition);
-
-        final Optional<EmployeesRecord> record = forUpdate ?
-                selectConditionStep.forUpdate().of(EMPLOYEES_TABLE).fetchOptional() :
-                selectConditionStep.fetchOptional();
-
-        return record.map(r -> r.into(Employees.class));
-    }
-
-    @Override
-    public List<Employees> findByFilter(EmployeeFilter filter, Boolean forUpdate) {
+    public List<EmployeesPojo> findByFilter(EmployeeFilter filter, Boolean forUpdate) {
         final Condition condition = composeEmployeeFilter(filter);
 
         final var selectConditionStep = dslContext.selectFrom(EMPLOYEES_TABLE)
@@ -73,8 +57,21 @@ public class JooqEmployeeRepository implements EmployeeRepository {
                 selectConditionStep.fetch();
 
         return records.stream()
-                .map(r -> r.into(Employees.class))
+                .map(r -> r.into(EmployeesPojo.class))
                 .toList();
+    }
+
+    @Override
+    public void delete(UUID id) {
+        try {
+            if (existsByIdWithLock(id)) {
+                dslContext.deleteFrom(EMPLOYEES_TABLE)
+                        .where(EMPLOYEES_TABLE.ID.eq(id))
+                        .execute();
+            }
+        } catch (Throwable throwable) {
+            throw persistenceExceptionMapper.map(throwable);
+        }
     }
 
     @Override
@@ -96,13 +93,16 @@ public class JooqEmployeeRepository implements EmployeeRepository {
     private Condition composeEmployeeFilter(EmployeeFilter filter) {
         final AtomicReference<Condition> condition = new AtomicReference<>(DSL.noCondition());
 
-        Optional.ofNullable(filter.getRole())
+        Optional.ofNullable(filter.id())
+                .ifPresent(id -> condition.set(condition.get().and(EMPLOYEES_TABLE.ID.eq(id))));
+
+        Optional.ofNullable(filter.role())
                 .ifPresent(role -> condition.set(condition.get().and(EMPLOYEES_TABLE.ROLE.eq(role.toUpperCase()))));
 
-        Optional.ofNullable(filter.getUsername())
+        Optional.ofNullable(filter.username())
                 .ifPresent(username -> condition.set(condition.get().and(EMPLOYEES_TABLE.USERNAME.eq(username))));
 
-        Optional.ofNullable(filter.getPickupPointId())
+        Optional.ofNullable(filter.pickupPointId())
                 .ifPresent(pickupPointId ->
                         condition.set(condition.get().and(EMPLOYEES_TABLE.PICKUP_POINT_ID.eq(pickupPointId))));
 

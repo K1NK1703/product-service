@@ -1,21 +1,24 @@
 package ru.romanov.marketplace.productservice.service;
 
+import ru.romanov.marketplace.productservice.jooq.tables.pojos.EmployeesPojo;
 import ru.romanov.marketplace.productservice.dto.response.EmployeeResponse;
+import ru.romanov.marketplace.productservice.dto.request.EmployeeFindRequest;
 import ru.romanov.marketplace.productservice.dto.request.EmployeeCreateRequest;
 import ru.romanov.marketplace.productservice.dto.request.EmployeeUpdateRequest;
 import ru.romanov.marketplace.productservice.dto.response.EmployeeFindResponse;
-import ru.romanov.marketplace.productservice.dto.request.EmployeeFindByIdRequest;
-import ru.romanov.marketplace.productservice.dto.request.EmployeeFindByFilterRequest;
-import ru.romanov.marketplace.productservice.dto.response.EmployeeFindByFilterResponse;
+
+import java.util.List;
 
 public interface EmployeeService {
 
-    EmployeeResponse createEmployee(EmployeeCreateRequest createRequest);
+    EmployeeResponse create(EmployeeCreateRequest createRequest);
 
-    EmployeeFindResponse findEmployeeById(EmployeeFindByIdRequest findByIdRequest);
+    EmployeeFindResponse findById(String id);
 
-    EmployeeFindByFilterResponse findByFilter(EmployeeFindByFilterRequest findByFilterRequest);
+    List<EmployeesPojo> findByFilter(EmployeeFindRequest findByFilterRequest);
 
-    EmployeeResponse updateEmployee(EmployeeUpdateRequest updateRequest);
+    EmployeeResponse update(EmployeeUpdateRequest updateRequest);
+
+    void delete(String id);
 
 }

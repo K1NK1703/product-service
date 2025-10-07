@@ -1,4 +1,5 @@
-import org.codehaus.groovy.runtime.GStringImpl
+import org.flywaydb.core.Flyway
+import org.testcontainers.containers.PostgreSQLContainer
 
 buildscript {
     repositories {
@@ -6,16 +7,17 @@ buildscript {
     }
     dependencies {
         classpath 'org.flywaydb:flyway-database-postgresql:11.12.0'
+        classpath 'org.testcontainers:postgresql:1.21.3'
+        classpath 'org.postgresql:postgresql:42.7.7'
     }
 }
 
 plugins {
     id 'java'
-    id 'war'
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
-    alias(libs.plugins.flyway)
     alias(libs.plugins.jooq.codegen)
+    alias(libs.plugins.openapi.generator)
 }
 
 group = 'ru.romanov.marketplace'
@@ -34,7 +36,6 @@ dependencies {
     implementation libs.spring.boot.starter.aop
     implementation libs.spring.boot.starter.actuator
     implementation libs.spring.boot.starter.jooq
-    providedRuntime libs.spring.boot.starter.tomcat
 
     // Documentation
     implementation libs.springdoc.openapi
@@ -42,15 +43,21 @@ dependencies {
     // Logging
     implementation libs.logbook
 
+    // MapStruct
+    implementation libs.mapstruct
+    annotationProcessor libs.mapstruct.processor
+
+    // Tracing
+    implementation libs.micrometer.tracing.bridge.otel
+
     // Utilities
     implementation libs.commons.lang3
-
-    // Development
-    developmentOnly libs.spring.boot.docker.compose
+    implementation libs.openapi.jackson
 
     // Database
     runtimeOnly libs.postgresql
     runtimeOnly libs.flyway.database.postgresql
+    implementation libs.flyway.core
 
     // Lombok
     compileOnly libs.lombok
@@ -59,6 +66,8 @@ dependencies {
     // jOOQ
     implementation libs.jooq
     jooqCodegen libs.postgresql
+    jooqCodegen libs.flyway.core
+    jooqCodegen libs.testcontainers.postrgesql
 
     // Testing
     testImplementation libs.spring.boot.starter.test
@@ -74,81 +83,55 @@ sourceSets {
         java {
             srcDirs = [
                     'src/main/java',
-                    'build/generated/sources/querydsl',
-                    'build/generated/sources/jooq'
+                    'build/generated/sources/jooq',
+                    'build/generated/sources/openapi/src/main/java',
+                    'build/generated/sources/annotationProcessor/java/main'
             ]
         }
     }
 }
 
-def resolvePostgresPort = {
-    def proc = ["docker", "compose", "port", "postgres", "5432"].execute()
-    proc.waitFor()
-    def output = proc.in.text.trim()
-    return output.split(":")[-1]
-}
-
-tasks.register('dockerUp', Exec) {
-    group = 'docker'
-    description = 'Start and running Docker container'
-    commandLine "docker", "compose", "up", "-d", "postgres"
-}
-
-tasks.register('waitForPostgres') {
-    dependsOn 'dockerUp'
-    doLast {
-        def port = resolvePostgresPort() as int
-        def maxTries = 20
-        def success = false
-        for (i in 1..maxTries) {
-            try {
-                new Socket("localhost", port).withCloseable { s ->
-                    success = true
-                }
-                break
-            } catch(Exception ignored) {
-                println "Postgres not ready yet... try $i"
-                sleep(3000)
-            }
-        }
-        if (!success) throw new GradleException('Postgres did not start in time')
-    }
-}
-
-tasks.register('dockerDown', Exec) {
-    group = 'docker'
-    description = 'Stop and remove Docker container'
-    commandLine "docker", "compose", "down"
-}
-
-tasks.named('flywayMigrate') {
-    dependsOn 'waitForPostgres'
-    doFirst {
-        def port = resolvePostgresPort() as int
-        flyway {
-            driver = 'org.postgresql.Driver'
-            url = "jdbc:postgresql://localhost:${port}/MarketPlace_db" as GStringImpl
-            user = project.findProperty('spring.datasource.username') ?: 'postgres'
-            password = project.findProperty('spring.datasource.password') ?: 'postgres'
-        }
-    }
-}
-
 tasks.named('jooqCodegen') {
-    dependsOn 'flywayMigrate'
-    finalizedBy 'dockerDown'
+    def postgres = null;
+
     doFirst {
-        def port = resolvePostgresPort() as int
+        postgres = new PostgreSQLContainer("postgres:17.5")
+                .withDatabaseName("MarketPlace_db")
+                .withUsername("postgres")
+                .withPassword("postgres")
+
+        postgres.start()
+
+        Flyway.configure()
+                .driver("org.postgresql.Driver")
+                .dataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword())
+                .locations("filesystem:${projectDir}/src/main/resources/db/migration")
+                .load()
+                .migrate()
+
         jooq {
             configuration {
                 jdbc {
                     driver = 'org.postgresql.Driver'
-                    url = "jdbc:postgresql://localhost:${port}/MarketPlace_db" as GStringImpl
-                    user = project.findProperty('spring.datasource.username') ?: 'postgres'
-                    password = project.findProperty('spring.datasource.password') ?: 'postgres'
+                    url = postgres.getJdbcUrl()
+                    user = postgres.getUsername()
+                    password = postgres.getPassword()
                 }
                 generator {
                     name = 'org.jooq.codegen.JavaGenerator'
+                    strategy {
+                        name = 'org.jooq.codegen.DefaultGeneratorStrategy'
+                        matchers {
+                            tables {
+                                table {
+                                    pojoClass {
+                                        transform = 'PASCAL'
+                                        expression = '$0_POJO'
+                                    }
+                                }
+                            }
+                        }
+                    }
                     database {
                         name = 'org.jooq.meta.postgres.PostgresDatabase'
                         includes = '.*'
@@ -165,10 +148,38 @@ tasks.named('jooqCodegen') {
             }
         }
     }
+    doLast {
+        if (postgres != null) {
+            postgres.stop()
+        }
+    }
+}
+
+openApiGenerate {
+    generatorName = 'spring'
+    inputSpec = "$rootDir/openapi/product_openapi.yml".toString()
+    outputDir = layout.buildDirectory.dir("generated/sources/openapi").get().asFile.toString()
+    apiPackage = 'ru.romanov.marketplace.productservice.api'
+    modelPackage = 'ru.romanov.marketplace.productservice.dto'
+    configOptions = [
+            interfaceOnly: 'true',
+            useSpringBoot3: 'true',
+            useTags: 'true',
+            serializableModel: 'true',
+            serializationLibrary: 'jackson',
+            skipDefaultInterface: 'true',
+            useSpringController: 'true',
+            useBeanValidation: 'true',
+            openApiNullable: 'false'
+    ]
+    globalProperties = [
+            modelDocs: 'false',
+            modelTests: 'false'
+    ]
 }
 
 tasks.named('compileJava') {
-    dependsOn 'jooqCodegen'
+    dependsOn 'jooqCodegen', 'openApiGenerate'
 }
 
 tasks.named('test') {

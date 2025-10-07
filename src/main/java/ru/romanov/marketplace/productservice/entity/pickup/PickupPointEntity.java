@@ -17,6 +17,7 @@ import lombok.Setter;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import ru.romanov.marketplace.productservice.entity.PointContactEntity;
 import ru.romanov.marketplace.productservice.entity.user.EmployeeEntity;
 
 import java.util.Set;

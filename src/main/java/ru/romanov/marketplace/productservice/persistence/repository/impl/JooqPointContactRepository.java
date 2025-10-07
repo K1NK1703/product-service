@@ -5,11 +5,11 @@ import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.springframework.util.CollectionUtils;
 import org.springframework.stereotype.Repository;
-import ru.romanov.marketplace.productservice.jooq.tables.pojos.PickupPoints;
-import ru.romanov.marketplace.productservice.jooq.tables.pojos.PointContacts;
+import ru.romanov.marketplace.productservice.jooq.tables.pojos.PickupPointsPojo;
+import ru.romanov.marketplace.productservice.jooq.tables.pojos.PointContactsPojo;
 import ru.romanov.marketplace.productservice.jooq.tables.records.PointContactsRecord;
 import ru.romanov.marketplace.productservice.persistence.PersistenceExceptionMapper;
-import ru.romanov.marketplace.productservice.persistence.repository.PointContactInfoRepository;
+import ru.romanov.marketplace.productservice.persistence.repository.PointContactRepository;
 
 import java.util.Set;
 import java.util.UUID;
@@ -20,13 +20,13 @@ import static ru.romanov.marketplace.productservice.persistence.repository.Table
 
 @Repository
 @RequiredArgsConstructor
-public class JooqPointContactInfoRepository implements PointContactInfoRepository {
+public class JooqPointContactRepository implements PointContactRepository {
 
     private final DSLContext dslContext;
     private final PersistenceExceptionMapper persistenceExceptionMapper;
 
     @Override
-    public void create(PointContacts pointContactsPojo, Set<PickupPoints> pickupPoints) {
+    public void create(PointContactsPojo pointContactsPojo, Set<PickupPointsPojo> pickupPoints) {
         try {
             PointContactsRecord pointContactsRecord = dslContext.newRecord(POINT_CONTACTS_TABLE, pointContactsPojo);
             pointContactsRecord.store();
@@ -40,20 +40,22 @@ public class JooqPointContactInfoRepository implements PointContactInfoRepositor
     }
 
     @Override
-    public void update(PointContacts pointContactsPojo, Set<PickupPoints> pickupPoints) {
+    public void update(PointContactsPojo pointContactsPojo, Set<PickupPointsPojo> pickupPoints) {
         try {
             PointContactsRecord pointContactsRecord = dslContext.newRecord(POINT_CONTACTS_TABLE, pointContactsPojo);
             dslContext.executeUpdate(pointContactsRecord);
             UUID pointContactId = pointContactsPojo.getId();
 
-            updatePointContactPickupPoints(pickupPoints, pointContactId);
+            if (!CollectionUtils.isEmpty(pickupPoints)) {
+                updatePointContactPickupPoints(pickupPoints, pointContactId);
+            }
         } catch (Throwable throwable) {
             throw persistenceExceptionMapper.map(throwable);
         }
     }
 
     @Override
-    public Optional<PointContacts> findById(UUID id, Boolean forUpdate) {
+    public Optional<PointContactsPojo> findById(UUID id, Boolean forUpdate) {
         final Condition condition = composeDefaultFindOneCondition(id);
 
         final var selectConditionStep = dslContext.selectFrom(POINT_CONTACTS_TABLE)
@@ -63,7 +65,7 @@ public class JooqPointContactInfoRepository implements PointContactInfoRepositor
                 selectConditionStep.forUpdate().of(POINT_CONTACTS_TABLE).fetchOptional() :
                 selectConditionStep.fetchOptional();
 
-        return record.map(r -> r.into(PointContacts.class));
+        return record.map(r -> r.into(PointContactsPojo.class));
     }
 
     @Override
@@ -78,7 +80,7 @@ public class JooqPointContactInfoRepository implements PointContactInfoRepositor
                 .isPresent();
     }
 
-    private void insertPointContactsPickupPoint(Set<PickupPoints> pickupPoints) {
+    private void insertPointContactsPickupPoint(Set<PickupPointsPojo> pickupPoints) {
         if (!CollectionUtils.isEmpty(pickupPoints)) {
             dslContext.batchInsert(
                     pickupPoints.stream()
@@ -89,7 +91,7 @@ public class JooqPointContactInfoRepository implements PointContactInfoRepositor
         }
     }
 
-    private void updatePointContactPickupPoints(Set<PickupPoints> pickupPoints, UUID contactId) {
+    private void updatePointContactPickupPoints(Set<PickupPointsPojo> pickupPoints, UUID contactId) {
         dslContext.deleteFrom(PICKUP_POINTS_TABLE)
                 .where(PICKUP_POINTS_TABLE.CONTACT_ID.eq(contactId))
                 .execute();

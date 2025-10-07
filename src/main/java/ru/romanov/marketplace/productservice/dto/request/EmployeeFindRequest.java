@@ -2,7 +2,9 @@ package ru.romanov.marketplace.productservice.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public record EmployeeFindByFilterRequest(
+public record EmployeeFindRequest(
+
+        @JsonProperty(value = "id") String id,
 
         @JsonProperty(value = "role") String role,
 

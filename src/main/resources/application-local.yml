@@ -1,14 +1,9 @@
 spring:
-  docker:
-    compose:
-      enabled: true
-      stop:
-        command: down
-
   datasource:
     url: jdbc:postgresql://${DB_URL}:${DB_PORT}/${DB_NAME}?characterEncoding=UTF-8&useUnicode=true&useSSL=false&serverTimezone=UTC
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
 
   flyway:
     enabled: true
@@ -16,8 +11,12 @@ spring:
     baseline-on-migrate: true
 
 logbook:
-#  predicate:
-#    include:
-#      - /api/**
+  predicate:
+    exclude:
+      - path: /actuator/**
   format:
     style: http
+
+logging:
+  level:
+    org.zalando.logbook: TRACE

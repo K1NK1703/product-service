@@ -4,104 +4,134 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import ru.romanov.marketplace.productservice.aop.Logging;
+import ru.romanov.marketplace.productservice.utils.UUIDGenerator;
 import ru.romanov.marketplace.productservice.mapper.EmployeeMapper;
-import ru.romanov.marketplace.productservice.service.EmployeeService;
-import ru.romanov.marketplace.productservice.service.ServiceException;
-import ru.romanov.marketplace.productservice.jooq.tables.pojos.Employees;
+import ru.romanov.marketplace.productservice.jooq.tables.pojos.EmployeesPojo;
 import ru.romanov.marketplace.productservice.persistence.filter.EmployeeFilter;
-import ru.romanov.marketplace.productservice.dto.response.EmployeeResponse;
-import ru.romanov.marketplace.productservice.dto.request.EmployeeUpdateRequest;
-import ru.romanov.marketplace.productservice.dto.response.EmployeeFindResponse;
-import ru.romanov.marketplace.productservice.dto.request.EmployeeCreateRequest;
-import ru.romanov.marketplace.productservice.dto.request.EmployeeFindByIdRequest;
-import ru.romanov.marketplace.productservice.dto.request.EmployeeFindByFilterRequest;
-import ru.romanov.marketplace.productservice.dto.response.EmployeeFindByFilterResponse;
 import ru.romanov.marketplace.productservice.persistence.repository.EmployeeRepository;
+import ru.romanov.marketplace.productservice.service.EmployeeService;
+import ru.romanov.marketplace.productservice.exception.ProductException;
+import ru.romanov.marketplace.productservice.dto.response.EmployeeResponse;
+import ru.romanov.marketplace.productservice.dto.request.EmployeeFindRequest;
+import ru.romanov.marketplace.productservice.dto.request.EmployeeUpdateRequest;
+import ru.romanov.marketplace.productservice.dto.request.EmployeeCreateRequest;
+import ru.romanov.marketplace.productservice.dto.response.EmployeeFindResponse;
 
-import java.util.List;
 import java.util.UUID;
+import java.util.List;
 import java.util.Optional;
+import java.util.Collection;
+
+import static ru.romanov.marketplace.productservice.utils.MessageUtils.OPERATION_ERROR;
+import static ru.romanov.marketplace.productservice.utils.MessageUtils.EMPLOYEE_NOT_FOUND;
+import static ru.romanov.marketplace.productservice.utils.MessageUtils.EMPLOYEE_CREATE_SUCCESS;
+import static ru.romanov.marketplace.productservice.utils.MessageUtils.EMPLOYEE_UPDATE_SUCCESS;
 
 @Service
 @RequiredArgsConstructor
 public class EmployeeServiceImpl implements EmployeeService {
 
-    private static final String ERROR_MSG = "Message: %s. Error: %s";
-
-    private static final String CREATE_SUCCESS = "Employee %s created Successfully";
-
-    private static final String UPDATE_SUCCESS = "Employee %s updated Successfully";
+    private final UUIDGenerator uuidGenerator;
 
     private final EmployeeMapper employeeMapper;
+
     private final EmployeeRepository employeeRepository;
 
-    @Logging(value = "Создание сотрудника ПВЗ", logResult = false)
     @Transactional
     @Override
-    public EmployeeResponse createEmployee(EmployeeCreateRequest createRequest) {
+    public EmployeeResponse create(EmployeeCreateRequest createRequest) {
         try {
-            Employees employee = employeeMapper.employeeCreateToPojo(createRequest);
-            UUID id = employeeRepository.create(employee);
+            UUID id = uuidGenerator.generateUUID();
 
-            Employees updated = employeeRepository.findById(id, true)
-                    .orElseThrow(() -> new ServiceException.NotFoundException("Employee with id %s not found".formatted(id)));
+            EmployeesPojo employee = employeeMapper.toCreatePojo(createRequest);
+            employee.setId(id);
 
-            return employeeMapper.employeeToResponse(updated, CREATE_SUCCESS.formatted(updated.getUsername()));
+            employeeRepository.create(employee);
+
+            EmployeeFindResponse created = findById(String.valueOf(id));
+
+            return new EmployeeResponse(
+                    String.valueOf(id),
+                    created.username(),
+                    created.email(),
+                    created.pickupPointId(),
+                    EMPLOYEE_CREATE_SUCCESS.formatted(created.username())
+            );
         } catch (Exception e) {
-            throw new ServiceException.CreationException(ERROR_MSG.formatted("Create error", e.getMessage()));
+            throw new ProductException.CreationException(OPERATION_ERROR.formatted("Create error", e.getMessage()));
         }
     }
 
-    @Logging(value = "Поиск сотрудника ПВЗ")
     @Transactional
     @Override
-    public EmployeeFindResponse findEmployeeById(EmployeeFindByIdRequest findByIdRequest) {
+    public EmployeeFindResponse findById(String id) {
         try {
-            String id = Optional.ofNullable(findByIdRequest.id())
-                    .orElseThrow(() -> new ServiceException.NotFoundException("Employee id cannot be null"));
+            EmployeeFilter filter = new EmployeeFilter(
+                    UUID.fromString(id),
+                    null,
+                    null,
+                    null
+            );
 
-            Employees employee = employeeRepository.findById(UUID.fromString(id), true)
-                    .orElseThrow(() -> new ServiceException.NotFoundException("Employee with id %s not found".formatted(id)));
+            List<EmployeesPojo> list = employeeRepository.findByFilter(filter, true);
 
-            return employeeMapper.employeeToFindResponse(employee);
+            return Optional.ofNullable(list)
+                    .stream()
+                    .flatMap(Collection::stream)
+                    .findFirst()
+                    .map(employeeMapper::toFindResponse)
+                    .orElseThrow(() -> new ProductException.NotFoundException(EMPLOYEE_NOT_FOUND.formatted(id)));
         } catch (Exception e) {
-            throw new ServiceException.NotFoundException(ERROR_MSG.formatted("Found error", e.getMessage()));
+            throw new ProductException.NotFoundException(OPERATION_ERROR.formatted("Found error", e.getMessage()));
         }
     }
 
-    @Logging(value = "Поиск сотрудников ПВЗ по фильтру", logResult = false)
     @Transactional(propagation = Propagation.REQUIRED)
     @Override
-    public EmployeeFindByFilterResponse findByFilter(EmployeeFindByFilterRequest findByFilterRequest) {
+    public List<EmployeesPojo> findByFilter(EmployeeFindRequest findByFilterRequest) {
         try {
-            EmployeeFilter filter = employeeMapper.employeeToFindFilter(findByFilterRequest);
-            List<Employees> employeeList = employeeRepository.findByFilter(filter, true);
+            EmployeeFilter filter = employeeMapper.toFilter(findByFilterRequest);
 
-            return employeeMapper.employeesToFindByFilterResponse(employeeList);
+            return employeeRepository.findByFilter(filter, true);
         } catch (Exception e) {
-            throw new ServiceException.ConversionException(ERROR_MSG.formatted("Conversion error", e.getMessage()));
+            throw new ProductException.ConversionException(OPERATION_ERROR.formatted("Found error", e.getMessage()));
         }
     }
 
-    @Logging(value = "Обновление данных о сотруднике ПВЗ", logParams = false, logResult = false)
     @Transactional
     @Override
-    public EmployeeResponse updateEmployee(EmployeeUpdateRequest updateRequest) {
+    public EmployeeResponse update(EmployeeUpdateRequest updateRequest) {
         try {
-            if (!employeeRepository.existsByIdWithLock(UUID.fromString(updateRequest.id()))) {
-                throw new ServiceException.NotFoundException("Employee with id %s not found".formatted(updateRequest.id()));
+            UUID id = UUID.fromString(updateRequest.id());
+
+            if (!employeeRepository.existsByIdWithLock(id)) {
+                throw new ProductException.NotFoundException(EMPLOYEE_NOT_FOUND.formatted(id));
             }
 
-            Employees employee = employeeMapper.employeeUpdateToPojo(updateRequest);
-            UUID id = employeeRepository.update(employee);
+            EmployeesPojo employee = employeeMapper.toUpdatePojo(updateRequest);
+            employeeRepository.update(employee);
 
-            Employees updated = employeeRepository.findById(id, true)
-                    .orElseThrow(() -> new ServiceException.NotFoundException("Employee with id %s not found".formatted(id)));
+            EmployeeFindResponse updated = findById(String.valueOf(id));
 
-            return employeeMapper.employeeToResponse(updated, UPDATE_SUCCESS.formatted(updated.getUsername()));
+            return new EmployeeResponse(
+                    updateRequest.id(),
+                    updated.username(),
+                    updated.email(),
+                    updated.pickupPointId(),
+                    EMPLOYEE_UPDATE_SUCCESS.formatted(updated.username())
+            );
         } catch (Exception e) {
-            throw new ServiceException.UpdateException(ERROR_MSG.formatted("Update error", e.getMessage()));
+            throw new ProductException.UpdateException(OPERATION_ERROR.formatted("Update error", e.getMessage()));
+        }
+    }
+
+    @Transactional
+    @Override
+    public void delete(String id) {
+        try {
+            employeeRepository.delete(UUID.fromString(id));
+        } catch (Exception e) {
+            throw new ProductException.DeletedException(OPERATION_ERROR.formatted("Delete error", e.getMessage()));
         }
     }
 }

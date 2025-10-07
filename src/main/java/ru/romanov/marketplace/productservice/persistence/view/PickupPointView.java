@@ -1,14 +1,14 @@
 package ru.romanov.marketplace.productservice.persistence.view;
 
-import ru.romanov.marketplace.productservice.jooq.tables.pojos.Employees;
-import ru.romanov.marketplace.productservice.jooq.tables.pojos.PickupPoints;
+import ru.romanov.marketplace.productservice.jooq.tables.pojos.EmployeesPojo;
+import ru.romanov.marketplace.productservice.jooq.tables.pojos.PickupPointsPojo;
 
 import java.util.Set;
 
 public record PickupPointView(
 
-        PickupPoints pickupPoint,
+        PickupPointsPojo pickupPoint,
 
-        Set<Employees> employees
+        Set<EmployeesPojo> employees
 
 ) {}

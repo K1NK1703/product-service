@@ -1,4 +1,4 @@
-package ru.romanov.marketplace.productservice.entity.pickup;
+package ru.romanov.marketplace.productservice.entity;
 
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -13,6 +13,7 @@ import lombok.Setter;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import ru.romanov.marketplace.productservice.entity.pickup.PickupPointEntity;
 
 import java.util.Set;
 import java.util.UUID;

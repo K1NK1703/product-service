@@ -3,8 +3,8 @@ package ru.romanov.marketplace.productservice.persistence.mapper;
 import org.jooq.Record;
 import org.jooq.RecordMapper;
 import org.springframework.stereotype.Component;
-import ru.romanov.marketplace.productservice.jooq.tables.pojos.PickupPoints;
 import ru.romanov.marketplace.productservice.persistence.view.PickupPointView;
+import ru.romanov.marketplace.productservice.jooq.tables.pojos.PickupPointsPojo;
 
 import java.util.HashSet;
 
@@ -17,7 +17,7 @@ public class PickupPointViewMapper implements RecordMapper<Record, PickupPointVi
     @Override
     public PickupPointView map(Record record) {
         return new PickupPointView(
-                record.into(PICKUP_POINTS_TABLE).into(PickupPoints.class),
+                record.into(PICKUP_POINTS_TABLE).into(PickupPointsPojo.class),
                 new HashSet<>(record.get(PICKUP_POINT_EMPLOYEES_MULTISET))
         );
     }

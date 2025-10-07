@@ -1,21 +1,21 @@
-package ru.romanov.marketplace.productservice.service;
+package ru.romanov.marketplace.productservice.exception;
 
 import java.io.Serial;
 
-public sealed class ServiceException extends RuntimeException {
+public sealed class ProductException extends RuntimeException {
 
     @Serial
     private static final long serialVersionUID = 3777225522073808176L;
 
-    public ServiceException(String message) {
+    public ProductException(String message) {
         super(message);
     }
 
-    public ServiceException(String message, Throwable cause) {
+    public ProductException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    final public static class CreationException extends ServiceException {
+    final public static class CreationException extends ProductException {
 
         @Serial
         private static final long serialVersionUID = -2190714934560693702L;
@@ -25,7 +25,7 @@ public sealed class ServiceException extends RuntimeException {
         }
     }
 
-    final public static class NotFoundException extends ServiceException {
+    final public static class NotFoundException extends ProductException {
 
         @Serial
         private static final long serialVersionUID = 1773508033010380639L;
@@ -35,7 +35,7 @@ public sealed class ServiceException extends RuntimeException {
         }
     }
 
-    final public static class ConversionException extends ServiceException {
+    final public static class ConversionException extends ProductException {
 
         @Serial
         private static final long serialVersionUID = -807684479440799442L;
@@ -45,7 +45,7 @@ public sealed class ServiceException extends RuntimeException {
         }
     }
 
-    final public static class UpdateException extends ServiceException {
+    final public static class UpdateException extends ProductException {
 
         @Serial
         private static final long serialVersionUID = -1720875583181640429L;
@@ -55,12 +55,12 @@ public sealed class ServiceException extends RuntimeException {
         }
     }
 
-    final public static class NotExistException extends ServiceException {
+    final public static class DeletedException extends ProductException {
 
         @Serial
-        private static final long serialVersionUID = 8857318283531780735L;
+        private static final long serialVersionUID = -5812904561886343031L;
 
-        public NotExistException(String message) {
+        public DeletedException(String message) {
             super(message);
         }
     }

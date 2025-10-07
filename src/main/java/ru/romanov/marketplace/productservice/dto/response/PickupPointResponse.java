@@ -1,14 +1,10 @@
 package ru.romanov.marketplace.productservice.dto.response;
 
-public record EmployeeResponse(
+public record PickupPointResponse(
 
         String id,
 
-        String username,
-
-        String email,
-
-        String pickupPointId,
+        String address,
 
         String message
 

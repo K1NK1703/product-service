@@ -1,21 +1,20 @@
 package ru.romanov.marketplace.productservice.persistence.repository;
 
-import ru.romanov.marketplace.productservice.jooq.tables.pojos.Employees;
+import ru.romanov.marketplace.productservice.jooq.tables.pojos.EmployeesPojo;
 import ru.romanov.marketplace.productservice.persistence.filter.EmployeeFilter;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.Optional;
 
 public interface EmployeeRepository {
 
-    UUID create(Employees employeePojo);
+    void create(EmployeesPojo pojo);
 
-    UUID update(Employees employeePojo);
+    void update(EmployeesPojo pojo);
 
-    Optional<Employees> findById(UUID id, Boolean forUpdate);
+    List<EmployeesPojo> findByFilter(EmployeeFilter filter, Boolean forUpdate);
 
-    List<Employees> findByFilter(EmployeeFilter filter, Boolean forUpdate);
+    void delete(UUID id);
 
     boolean existsByIdWithLock(UUID id);
 

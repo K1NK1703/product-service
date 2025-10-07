@@ -1,0 +1,710 @@
+openapi: 3.0.0
+info:
+  title: Product API
+  description: Product API for education project
+  version: 0.0.1-SNAPSHOT
+
+servers:
+  - url: http://localhost:8080/api
+    description: Local server
+
+paths:
+  /employees/create:
+    post:
+      operationId: createEmployee
+      summary: Create a new employee
+      tags:
+        - Employees
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeCreateRequest'
+      responses:
+        '201':
+          description: Employee created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponse'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+
+  /employees/find/{id}:
+    get:
+      operationId: findByIdEmployee
+      summary: Find employee by ID
+      tags:
+        - Employees
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Employee ID
+      responses:
+        '200':
+          description: Employee found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeFindResponse'
+        '404':
+          description: Employee not found
+        '500':
+          description: Internal server error
+
+  /employees/filter:
+    get:
+      operationId: findByFilterEmployee
+      summary: Find employees by filter
+      tags:
+        - Employees
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeFindRequest'
+      responses:
+        '200':
+          description: Employees found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmployeesPojo'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+
+  /employees/update:
+    put:
+      operationId: updateEmployee
+      summary: Update employee
+      tags:
+        - Employees
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeUpdateRequest'
+      responses:
+        '200':
+          description: Employee updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponse'
+        '404':
+          description: Employee not found
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+
+  /employees/delete/{id}:
+    delete:
+      operationId: deleteEmployee
+      summary: Delete employee by ID
+      tags:
+        - Employees
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Employee ID
+      responses:
+        '204':
+          description: Employee deleted successfully
+        '404':
+          description: Employee not found
+        '500':
+          description: Internal server error
+
+  /pickup-points/create:
+    post:
+      operationId: createPickupPoint
+      summary: Create a new pickup point
+      tags:
+        - PickupPoints
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PickupPointCreateRequest'
+      responses:
+        '201':
+          description: Pickup point created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PickupPointResponse'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+
+  /pickup-points/find:
+    get:
+      operationId: findOnePickupPoint
+      summary: Find pickup point by criteria
+      tags:
+        - PickupPoints
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PickupPointFindRequest'
+      responses:
+        '200':
+          description: Pickup point found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PickupPointFindResponse'
+        '404':
+          description: Pickup point not found
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+
+  /pickup-points/find/view:
+    get:
+      operationId: findOneViewPickupPoint
+      summary: Find pickup point view by criteria
+      tags:
+        - PickupPoints
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PickupPointFindRequest'
+      responses:
+        '200':
+          description: Pickup point view found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PickupPointFindResponse'
+        '404':
+          description: Pickup point not found
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+
+  /pickup-points/update:
+    put:
+      operationId: updatePickupPoint
+      summary: Update pickup point
+      tags:
+        - PickupPoints
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PickupPointUpdateRequest'
+      responses:
+        '200':
+          description: Pickup point updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PickupPointResponse'
+        '404':
+          description: Pickup point not found
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+
+  /point-contacts/create:
+    post:
+      operationId: createPointContact
+      summary: Create a new point contact
+      tags:
+        - PointContacts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PointContactCreateRequest'
+      responses:
+        '201':
+          description: Point contact created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PointContactResponse'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+
+  /point-contacts/find/{id}:
+    get:
+      operationId: findByIdPointContact
+      summary: Find point contact by ID
+      tags:
+        - PointContacts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Point contact ID
+      responses:
+        '200':
+          description: Point contact found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PointContactResponse'
+        '404':
+          description: Point contact not found
+        '500':
+          description: Internal server error
+
+  /point-contacts/update:
+    put:
+      operationId: updatePointContact
+      summary: Update point contact
+      tags:
+        - PointContacts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PointContactUpdateRequest'
+      responses:
+        '200':
+          description: Point contact updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PointContactResponse'
+        '404':
+          description: Point contact not found
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+
+components:
+  schemas:
+    EmployeeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Employee ID
+        username:
+          type: string
+          description: Employee username
+        email:
+          type: string
+          format: email
+          description: Employee email
+        pickupPointId:
+          type: string
+          description: Associated pickup point ID
+        message:
+          type: string
+          description: Response message
+
+    EmployeeCreateRequest:
+      type: object
+      required:
+        - firstName
+        - phoneNumber
+        - username
+        - password
+        - email
+        - role
+      properties:
+        firstName:
+          type: string
+          description: Employee first name
+        lastName:
+          type: string
+          description: Employee last name
+        phoneNumber:
+          type: string
+          description: Employee phone number
+        username:
+          type: string
+          description: Employee username
+        password:
+          type: string
+          format: password
+          description: Employee password
+        email:
+          type: string
+          format: email
+          description: Employee email
+        role:
+          type: string
+          description: Employee role
+        pickupPointId:
+          type: string
+          description: Associated pickup point ID
+        salary:
+          type: string
+          description: Employee salary
+
+    EmployeeFindResponse:
+      type: object
+      properties:
+        firstName:
+          type: string
+          description: Employee first name
+        lastName:
+          type: string
+          description: Employee last name
+        phoneNumber:
+          type: string
+          description: Employee phone number
+        username:
+          type: string
+          description: Employee username
+        email:
+          type: string
+          format: email
+          description: Employee email
+        role:
+          type: string
+          description: Employee role
+        pickupPointId:
+          type: string
+          description: Associated pickup point ID
+
+    EmployeesPojo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Employee ID
+        username:
+          type: string
+          description: Employee username
+        email:
+          type: string
+          format: email
+          description: Employee email
+        phoneNumber:
+          type: string
+          description: Employee phone number
+        password:
+          type: string
+          format: password
+          description: Employee password
+        role:
+          type: string
+          description: Employee role
+        firstName:
+          type: string
+          description: Employee first name
+        lastName:
+          type: string
+          description: Employee last name
+        salary:
+          type: string
+          description: Employee salary
+        pickupPointId:
+          type: string
+          format: uuid
+          description: Associated pickup point ID
+
+    EmployeeFindRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Employee ID for filtering
+        role:
+          type: string
+          description: Employee role for filtering
+        username:
+          type: string
+          description: Employee username for filtering
+        pickupPointId:
+          type: string
+          description: Pickup point ID for filtering
+
+    EmployeeUpdateRequest:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          description: Employee ID to update
+        firstName:
+          type: string
+          description: Updated first name
+        lastName:
+          type: string
+          description: Updated last name
+        phoneNumber:
+          type: string
+          description: Updated phone number
+        username:
+          type: string
+          description: Updated username
+        password:
+          type: string
+          format: password
+          description: Updated password
+        email:
+          type: string
+          format: email
+          description: Updated email
+        role:
+          type: string
+          description: Updated role
+        pickupPointId:
+          type: string
+          description: Updated pickup point ID
+        salary:
+          type: string
+          description: Updated salary
+
+    PickupPointResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Pickup point ID
+        address:
+          type: string
+          description: Formatted address string
+        message:
+          type: string
+          description: Response message
+
+    PickupPointCreateRequest:
+      type: object
+      required:
+        - country
+        - region
+        - city
+        - street
+        - houseNumber
+        - openTime
+        - closeTime
+      properties:
+        contactId:
+          type: string
+          description: Contact information ID
+        country:
+          type: string
+          description: Country
+        region:
+          type: string
+          description: Region
+        city:
+          type: string
+          description: City
+        street:
+          type: string
+          description: Street
+        houseNumber:
+          type: string
+          description: House number
+        entrance:
+          type: string
+          description: Entrance number
+        openTime:
+          type: string
+          description: Opening time
+        closeTime:
+          type: string
+          description: Closing time
+        employees:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmployeesPojo'
+          description: Associated employees
+
+    PickupPointFindResponse:
+      type: object
+      properties:
+        address:
+          type: string
+          description: Formatted address
+        workingHours:
+          type: string
+          description: Formatted working hours
+        contactId:
+          type: string
+          description: Contact information ID
+        rating:
+          type: string
+          description: Pickup point rating
+        employees:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmployeesPojo'
+          description: Associated employees
+
+    PickupPointFindRequest:
+      type: object
+      required:
+        - country
+        - region
+        - city
+        - street
+        - houseNumber
+      properties:
+        id:
+          type: string
+          description: Pickup point ID
+        country:
+          type: string
+          description: Country
+        region:
+          type: string
+          description: Region
+        city:
+          type: string
+          description: City
+        street:
+          type: string
+          description: Street
+        houseNumber:
+          type: string
+          description: House number
+        entrance:
+          type: string
+          description: Entrance number
+
+    PickupPointUpdateRequest:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          description: Pickup point ID to update
+        contactId:
+          type: string
+          description: Updated contact information ID
+        openTime:
+          type: string
+          description: Updated opening time
+        closeTime:
+          type: string
+          description: Updated closing time
+        employees:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmployeesPojo'
+          description: Updated associated employees
+
+    PointContactResponse:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          description: Contact phone number
+        site:
+          type: string
+          description: Website URL
+        message:
+          type: string
+          description: Response message
+
+    PointContactCreateRequest:
+      type: object
+      required:
+        - phoneNumber
+      properties:
+        phoneNumber:
+          type: string
+          description: Contact phone number
+        site:
+          type: string
+          description: Website URL
+        pickupPoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/PickupPointsPojo'
+          description: Associated pickup points
+
+    PointContactUpdateRequest:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          description: Point contact ID to update
+        phoneNumber:
+          type: string
+          description: Updated phone number
+        site:
+          type: string
+          description: Updated website URL
+        pickupPoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/PickupPointsPojo'
+          description: Updated associated pickup points
+
+    PickupPointsPojo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Pickup point ID
+        contactId:
+          type: string
+          format: uuid
+          description: Contact information ID
+        country:
+          type: string
+          description: Country
+        region:
+          type: string
+          description: Region
+        city:
+          type: string
+          description: City
+        street:
+          type: string
+          description: Street
+        houseNumber:
+          type: string
+          description: House number
+        entrance:
+          type: string
+          description: Entrance number
+        openTime:
+          type: string
+          description: Opening time
+        closeTime:
+          type: string
+          description: Closing time
+        rating:
+          type: string
+          description: Rating

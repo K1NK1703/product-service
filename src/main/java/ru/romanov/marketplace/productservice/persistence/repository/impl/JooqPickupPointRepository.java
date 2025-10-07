@@ -8,8 +8,8 @@ import org.jooq.DSLContext;
 import org.jooq.SelectConditionStep;
 import org.springframework.util.CollectionUtils;
 import org.springframework.stereotype.Repository;
-import ru.romanov.marketplace.productservice.jooq.tables.pojos.Employees;
-import ru.romanov.marketplace.productservice.jooq.tables.pojos.PickupPoints;
+import ru.romanov.marketplace.productservice.jooq.tables.pojos.EmployeesPojo;
+import ru.romanov.marketplace.productservice.jooq.tables.pojos.PickupPointsPojo;
 import ru.romanov.marketplace.productservice.jooq.tables.records.PickupPointsRecord;
 import ru.romanov.marketplace.productservice.persistence.view.PickupPointView;
 import ru.romanov.marketplace.productservice.persistence.PersistenceException;
@@ -36,7 +36,7 @@ public class JooqPickupPointRepository implements PickupPointRepository {
     private final PersistenceExceptionMapper persistenceExceptionMapper;
 
     @Override
-    public void create(PickupPoints pickupPointPojo, Set<Employees> employees) {
+    public void create(PickupPointsPojo pickupPointPojo, Set<EmployeesPojo> employees) {
         try {
             PickupPointsRecord pickupPointsRecord = dslContext.newRecord(PICKUP_POINTS_TABLE, pickupPointPojo);
             pickupPointsRecord.store();
@@ -50,34 +50,23 @@ public class JooqPickupPointRepository implements PickupPointRepository {
     }
 
     @Override
-    public void update(PickupPoints pickupPointPojo, Set<Employees> employees) {
+    public void update(PickupPointsPojo pickupPointPojo, Set<EmployeesPojo> employees) {
         try {
             PickupPointsRecord pickupPointsRecord = dslContext.newRecord(PICKUP_POINTS_TABLE, pickupPointPojo);
             dslContext.executeUpdate(pickupPointsRecord);
+
             UUID pickupPointId = pickupPointPojo.getId();
 
-            updatePickupPointEmployees(employees, pickupPointId);
+            if (!CollectionUtils.isEmpty(employees)) {
+                updatePickupPointEmployees(employees, pickupPointId);
+            }
         } catch (Throwable throwable) {
             throw persistenceExceptionMapper.map(throwable);
         }
     }
 
     @Override
-    public Optional<PickupPoints> findById(UUID id, Boolean forUpdate) {
-        final Condition condition = composeDefaultFindOneCondition(id);
-
-        final var selectConditionStep = dslContext.selectFrom(PICKUP_POINTS_TABLE)
-                .where(condition);
-
-        final Optional<PickupPointsRecord> record = forUpdate ?
-                selectConditionStep.forUpdate().of(PICKUP_POINTS_TABLE).fetchOptional() :
-                selectConditionStep.fetchOptional();
-
-        return record.map(r -> r.into(PickupPoints.class));
-    }
-
-    @Override
-    public PickupPoints findOne(PickupPointFilter filter, Boolean forUpdate) {
+    public PickupPointsPojo findOne(PickupPointFilter filter, Boolean forUpdate) {
         final Condition condition = composePickupPointFilter(filter);
 
         final var selectConditionStep = dslContext.selectFrom(PICKUP_POINTS_TABLE)
@@ -87,7 +76,7 @@ public class JooqPickupPointRepository implements PickupPointRepository {
                 selectConditionStep.forUpdate().of(PICKUP_POINTS_TABLE).fetchOptional() :
                 selectConditionStep.fetchOptional();
 
-        return record.map(r -> r.into(PickupPoints.class))
+        return record.map(r -> r.into(PickupPointsPojo.class))
                 .orElseThrow(() -> new PersistenceException.NotFound("PickupPoint(filter=%s) not found".formatted(filter)));
     }
 
@@ -115,7 +104,7 @@ public class JooqPickupPointRepository implements PickupPointRepository {
                 .isPresent();
     }
 
-    private void insertPickupPointsEmployees(Set<Employees> employees) {
+    private void insertPickupPointsEmployees(Set<EmployeesPojo> employees) {
         if (!CollectionUtils.isEmpty(employees)) {
             dslContext.batchInsert(
                     employees.stream()
@@ -125,7 +114,7 @@ public class JooqPickupPointRepository implements PickupPointRepository {
         }
     }
 
-    private void updatePickupPointEmployees(Set<Employees> employees, UUID pickupPointId) {
+    private void updatePickupPointEmployees(Set<EmployeesPojo> employees, UUID pickupPointId) {
         dslContext.deleteFrom(EMPLOYEES_TABLE)
                 .where(EMPLOYEES_TABLE.PICKUP_POINT_ID.eq(pickupPointId))
                 .execute();
@@ -140,18 +129,18 @@ public class JooqPickupPointRepository implements PickupPointRepository {
     private Condition composePickupPointFilter(PickupPointFilter filter) {
         final AtomicReference<Condition> condition = new AtomicReference<>(DSL.noCondition());
 
-        Optional.ofNullable(filter.getId())
+        Optional.ofNullable(filter.id())
                 .ifPresent(id -> condition.set(condition.get().and(PICKUP_POINTS_TABLE.ID.eq(id))));
 
-        Optional.ofNullable(filter.getAddress())
+        Optional.ofNullable(filter.address())
                 .ifPresent(address ->
                         condition.set(condition.get()
-                                .and(PICKUP_POINTS_TABLE.COUNTRY.eq(address.getCountry()))
-                                .and(PICKUP_POINTS_TABLE.REGION.eq(address.getRegion()))
-                                .and(PICKUP_POINTS_TABLE.CITY.eq(address.getCity()))
-                                .and(PICKUP_POINTS_TABLE.STREET.eq(address.getStreet()))
-                                .and(PICKUP_POINTS_TABLE.HOUSE_NUMBER.eq(address.getHouseNumber()))
-                                .and(PICKUP_POINTS_TABLE.ENTRANCE.eq(address.getEntrance()))
+                                .and(PICKUP_POINTS_TABLE.COUNTRY.eq(address.country()))
+                                .and(PICKUP_POINTS_TABLE.REGION.eq(address.region()))
+                                .and(PICKUP_POINTS_TABLE.CITY.eq(address.city()))
+                                .and(PICKUP_POINTS_TABLE.STREET.eq(address.street()))
+                                .and(PICKUP_POINTS_TABLE.HOUSE_NUMBER.eq(address.houseNumber()))
+                                .or(PICKUP_POINTS_TABLE.ENTRANCE.eq(address.entrance()))
                         )
                 );
 
